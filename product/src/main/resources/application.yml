@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: product
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # This is crucial! Replace with the actual issuer URI of your IDP server.
+          # The IDP must expose its JWKS endpoint at /.well-known/openid-configuration
+          # or a directly configured jwk-set-uri.
+          issuer-uri: http://127.0.0.1:8080 # Example for Keycloak, adjust for your IDP
+          # jwk-set-uri: http://localhost:8080/realms/your-realm/protocol/openid-connect/certs # Alternatively, if your IDP has a direct JWKS URL
+
+server:
+  port: 9001 # Enview IMF (Resource Server) will run on port 8081

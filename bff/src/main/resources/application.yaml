@@ -1,0 +1,50 @@
+server:
+  port: 7001
+  #servlet:
+   # session:
+    #  persistent: true
+     # timeout: 30m
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          my-client:
+            client-id: client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: read
+            provider: my-idp
+        provider:
+          my-idp:
+            authorization-uri: http://127.0.0.1:8080/oauth2/authorize
+            token-uri: http://127.0.0.1:8080/oauth2/token
+    oauth2-login:
+      default-success-url: http://localhost:8000/product_catalog.html
+
+  cloud:
+    gateway:
+      default-filters:
+        - TokenRelay
+      routes:
+        - id: product-service
+          uri: http://localhost:9001
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web.client: DEBUG
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.security.oauth2.client.endpoint: DEBUG
+    org.springframework.security.oauth2.client.registration: DEBUG
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+
+

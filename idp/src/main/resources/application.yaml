@@ -1,0 +1,19 @@
+server:
+  port: 8080 # IDP server will run on port 8080
+spring:
+  thymeleaf:
+    cache: false # Disable cache for development
+  application:
+    name: idp
+  # This issuer-uri will be used in the JWT's 'iss' claim and by the Resource Server
+  # to find the IDP's metadata (including JWKS endpoint).
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: http://localhost:8080 # Your IDP's base URL (no context path)
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG

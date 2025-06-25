@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog - SSO Demo</title>
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS for better aesthetics and specific layout adjustments */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: flex-start; /* Align to the top vertically */
+            min-height: 100vh; /* Full viewport height */
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2.5rem; /* p-10 equivalent */
+            border-radius: 1.5rem; /* rounded-3xl equivalent */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            max-width: 900px; /* Max width for content */
+            width: 100%;
+            margin-top: 20px; /* Space from the top */
+        }
+        .product-grid {
+            display: grid;
+            gap: 1.5rem; /* gap-6 equivalent */
+            /* Responsive grid columns: 1 column on small screens, 2 on medium, 3 on large */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        .product-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl equivalent */
+            overflow: hidden; /* Ensures image corners are rounded */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for cards */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
+            border: 1px solid #e2e8f0; /* border border-gray-200 */
+        }
+        .product-card:hover {
+            transform: translateY(-5px); /* Lift card slightly on hover */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Enhance shadow on hover */
+        }
+        .product-image-container {
+            width: 100%;
+            padding-top: 75%; /* 4:3 Aspect Ratio (height is 75% of width) */
+            position: relative;
+            background-color: #f3f4f6; /* Light gray background for image area */
+            display: flex; /* For centering placeholder text */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .product-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the container, cropping if necessary */
+            display: flex; /* For centering placeholder text */
+            justify-content: center;
+            align-items: center;
+            font-size: 0.875rem; /* text-sm equivalent */
+            color: #6b7280; /* text-gray-500 equivalent */
+            text-align: center;
+        }
+        .product-info {
+            padding: 1rem; /* p-4 equivalent */
+        }
+        .product-name {
+            font-weight: 600; /* font-semibold equivalent */
+            font-size: 1.125rem; /* text-lg equivalent */
+            margin-bottom: 0.5rem; /* mb-2 equivalent */
+            color: #1a202c; /* text-gray-900 equivalent */
+        }
+        .product-description {
+            font-size: 0.875rem; /* text-sm equivalent */
+            color: #4a5568; /* text-gray-700 equivalent */
+            margin-bottom: 0.75rem; /* mb-3 equivalent */
+        }
+        .product-price {
+            font-weight: 700; /* font-bold equivalent */
+            font-size: 1.25rem; /* text-xl equivalent */
+            color: #2b6cb0; /* text-blue-700 equivalent */
+        }
+        .btn-primary {
+            background-color: #4299e1; /* bg-blue-500 equivalent */
+            color: white;
+            padding: 0.75rem 1.5rem; /* py-3 px-6 equivalent */
+            border-radius: 0.75rem; /* rounded-xl equivalent */
+            font-weight: 600; /* font-semibold equivalent */
+            transition: background-color 0.3s ease, transform 0.1s ease; /* Smooth hover effect */
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            background-color: #3182ce; /* bg-blue-600 equivalent */
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+        .btn-secondary {
+            background-color: #e2e8f0; /* bg-gray-200 equivalent */
+            color: #2d3748; /* text-gray-800 equivalent */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e0; /* bg-gray-300 equivalent */
+            transform: translateY(-1px);
+        }
+        .btn-secondary:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+        .text-status {
+            font-weight: 500;
+            color: #4a5568; /* text-gray-700 equivalent */
+            margin-top: 1rem;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4299e1; /* Blue spinner */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite; /* Spinning animation */
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        /* Keyframe animation for the spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-4xl font-bold text-center text-gray-900 mb-8">Our Product Catalog</h1>
+
+    <!-- Authentication Status and Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mb-8 p-4 bg-gray-50 rounded-xl shadow-inner border border-gray-100">
+        <div id="auth-status" class="text-status mb-4 sm:mb-0">Not Authenticated.</div>
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <button id="authActionBtn" class="btn-primary flex items-center justify-center w-full">
+                Login / Fetch Products
+            </button>
+            <button id="logoutBtn" class="btn-secondary w-full" style="display:none;">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="hidden text-center text-blue-600 font-semibold mb-6">
+        <span class="loading-spinner"></span> Loading products...
+    </div>
+
+    <!-- Product Grid Container -->
+    <div id="products-container" class="product-grid">
+        <!-- Product cards will be dynamically rendered here by JavaScript -->
+    </div>
+
+    <!-- Error Message Display -->
+    <div id="error-message" class="hidden text-red-600 font-semibold text-center mt-6 p-4 bg-red-100 border border-red-300 rounded-lg">
+        <!-- Error messages will be displayed here -->
+    </div>
+</div>
+
+<script>
+    // --- Configuration Variables ---
+    // IMPORTANT: These URLs must match your running services
+    const BFF_BASE_URL = 'http://localhost:7001'; // Your Intermediary Spring App (BFF) URL
+    // The API path on your BFF that fetches products
+    const BFF_PRODUCTS_PATH = '/products';
+    // The OAuth2 client registration ID you configured in your BFF (from application.yml)
+    const OAUTH2_CLIENT_REGISTRATION_ID = 'my-client';
+
+    // --- DOM Element References ---
+    const AUTH_STATUS_DIV = document.getElementById('auth-status');
+    const AUTH_ACTION_BTN = document.getElementById('authActionBtn');
+    const LOGOUT_BTN = document.getElementById('logoutBtn');
+    const PRODUCTS_CONTAINER = document.getElementById('products-container');
+    const LOADING_INDICATOR = document.getElementById('loading-indicator');
+    const ERROR_MESSAGE_DIV = document.getElementById('error-message');
+
+    // Simple client-side state to track authentication status
+    let isAuthenticated = false;
+
+    // --- Utility Functions ---
+
+    /**
+     * Updates the UI to reflect the authentication status and changes button text.
+     * @param {boolean} status - True if the user is authenticated, false otherwise.
+     * @param {string} message - The status message to display.
+     */
+    function setAuthStatus(status, message) {
+        isAuthenticated = status;
+        AUTH_STATUS_DIV.textContent = message;
+        if (isAuthenticated) {
+            AUTH_ACTION_BTN.textContent = 'Refresh Products';
+            LOGOUT_BTN.style.display = 'inline-block';
+        } else {
+            AUTH_ACTION_BTN.textContent = 'Login / Fetch Products';
+            LOGOUT_BTN.style.display = 'none';
+        }
+    }
+
+    /**
+     * Displays the loading spinner and clears previous content/errors.
+     */
+    function showLoading() {
+        LOADING_INDICATOR.classList.remove('hidden');
+        PRODUCTS_CONTAINER.innerHTML = ''; // Clear existing products
+        ERROR_MESSAGE_DIV.classList.add('hidden'); // Hide any previous error messages
+    }
+
+    /**
+     * Hides the loading spinner.
+     */
+    function hideLoading() {
+        LOADING_INDICATOR.classList.add('hidden');
+    }
+
+    /**
+     * Displays an error message to the user in the dedicated error div.
+     * @param {string} message - The error message to display.
+     */
+    function showErrorMessage(message) {
+        ERROR_MESSAGE_DIV.textContent = message;
+        ERROR_MESSAGE_DIV.classList.remove('hidden');
+    }
+
+    /**
+     * Hides the error message div.
+     */
+    function hideErrorMessage() {
+        ERROR_MESSAGE_DIV.classList.add('hidden');
+    }
+
+    // --- Core Application Logic ---
+
+    /**
+     * Checks the current authentication status by attempting to access the BFF's
+     * protected /products endpoint. This relies on the BFF's session/cookie.
+     */
+    async function checkAuthStatus() {
+        console.log('Checking authentication status with BFF...');
+        showLoading(); // Show loading indicator while checking status
+        try {
+            // Call the BFF's /products endpoint.
+            // If the BFF's session is active, it will proxy the call and return products (200).
+            // If not, it will return 401/403 or redirect to login (which fetch won't follow).
+            const response = await fetch(`${BFF_BASE_URL}${BFF_PRODUCTS_PATH}`, { method: 'GET' });
+
+            if (response.ok) {
+                setAuthStatus(true, 'Authenticated.');
+                // If successfully authenticated, parse and display products
+                const products = await response.json();
+                renderProducts(products);
+            } else if (response.status === 401 || response.status === 403) {
+                // Not authenticated or BFF session expired
+                setAuthStatus(false, 'Not Authenticated. Please log in.');
+                PRODUCTS_CONTAINER.innerHTML = '<p class="text-center text-gray-600 col-span-full">Please log in to view products.</p>';
+                showErrorMessage('You are not logged in or your session has expired.');
+            } else {
+                // Other errors (e.g., BFF not running, network issue)
+                throw new Error(`Failed to check auth status: ${response.status} ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error checking authentication status:', error);
+            setAuthStatus(false, 'Not Authenticated. Cannot reach BFF or network error.');
+            showErrorMessage(`Failed to connect to BFF or a network error occurred. Please ensure BFF is running at ${BFF_BASE_URL}.`);
+        } finally {
+            hideLoading(); // Always hide loading indicator
+        }
+    }
+
+    /**
+     * Initiates the login process by redirecting the user's browser to the
+     * BFF's OAuth2 authorization initiation endpoint.
+     */
+    function initiateLogin() {
+        console.log('Redirecting to BFF for login...');
+        // This is the standard Spring Security OAuth2 client endpoint to begin the flow.
+        // Ensure this matches your BFF's client registration ID from application.yml.
+        window.location.href = `${BFF_BASE_URL}/oauth2/authorization/${OAUTH2_CLIENT_REGISTRATION_ID}`;
+    }
+
+    /**
+     * Handles the logout process by calling the BFF's logout endpoint.
+     * The BFF is responsible for clearing its session and potentially initiating IDP logout.
+     */
+    async function logout() {
+        console.log('Attempting to log out...');
+        showLoading(); // Show loading indicator during logout process
+        try {
+            // Send a POST request to BFF's logout endpoint
+            const response = await fetch(`${BFF_BASE_URL}/logout`, {
+                method: 'POST',
+                // Your BFF's Spring Security configuration for /logout might require
+                // a CSRF token for POST requests. If you encounter issues, consider
+                // configuring CSRF to be ignored for /logout in your BFF's SecurityConfig,
+                // or implement CSRF token handling in the UI.
+            });
+
+            if (response.ok) {
+                console.log('Successfully logged out from BFF.');
+                setAuthStatus(false, 'Logged Out.');
+                PRODUCTS_CONTAINER.innerHTML = ''; // Clear displayed products
+                hideErrorMessage(); // Clear any previous error messages
+            } else {
+                console.error('BFF logout failed:', response.status, response.statusText);
+                showErrorMessage(`Logout failed: ${response.statusText}. Please try again.`);
+            }
+        } catch (error) {
+            console.error('Network error during logout:', error);
+            showErrorMessage('Network error during logout. See console for details.');
+        } finally {
+            hideLoading(); // Always hide loading indicator
+        }
+    }
+
+    /**
+     * Fetches product data from the BFF. The BFF will automatically handle
+     * authentication and proxy the request to the Resource Server.
+     */
+    async function fetchProducts() {
+        showLoading(); // Show loading spinner
+        hideErrorMessage(); // Clear previous error messages
+        PRODUCTS_CONTAINER.innerHTML = ''; // Clear existing products
+
+        try {
+            // Make the request to the BFF's products endpoint
+            const response = await fetch(`${BFF_BASE_URL}${BFF_PRODUCTS_PATH}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // The browser will automatically send the HTTP-only session cookie to the BFF.
+                    // The BFF will then use its internal OAuth2 client to add the Authorization: Bearer header
+                    // when forwarding the request to the Resource Server.
+                }
+            });
+
+            if (response.ok) {
+                const products = await response.json();
+                renderProducts(products); // Render products if successful
+                setAuthStatus(true, 'Authenticated. Products loaded.');
+            } else if (response.status === 401 || response.status === 403) {
+                // This indicates that the BFF itself determined the user is not authenticated/authorized.
+                // This typically happens if the BFF's session has expired or the token it holds is invalid.
+                console.warn('Authentication required or session expired from BFF. Triggering re-login prompt.');
+                setAuthStatus(false, 'Session expired or not authorized. Please log in.');
+                showErrorMessage('Your session has expired. Please click "Login / Fetch Products" to re-authenticate.');
+            } else {
+                // Handle other HTTP errors from BFF or Resource Server
+                throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            showErrorMessage(`Could not fetch products: ${error.message}. Ensure BFF and Resource Server are running.`);
+            setAuthStatus(isAuthenticated, 'Error fetching products.'); // Keep current auth status if it was authenticated
+        } finally {
+            hideLoading(); // Always hide loading spinner
+        }
+    }
+
+    /**
+     * Renders the list of product objects into product cards in the UI.
+     * Uses placeholder images as product details don't include image URLs.
+     * @param {Array<Object>} products - An array of product objects, each with id, name, price, description.
+     */
+    function renderProducts(products) {
+        PRODUCTS_CONTAINER.innerHTML = ''; // Clear existing products before rendering new ones
+        if (!products || products.length === 0) {
+            PRODUCTS_CONTAINER.innerHTML = '<p class="text-center text-gray-600 col-span-full">No products found.</p>';
+            return;
+        }
+
+        products.forEach(product => {
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card'; // Apply Tailwind classes from CSS
+            productCard.innerHTML = `
+                <div class="product-image-container">
+                    <!-- Placeholder image from placehold.co. Adjust dimensions/colors if needed. -->
+                    <img src="https://placehold.co/400x300/e0e0e0/555555?text=${encodeURIComponent(product.name || 'Product')}"
+                         alt="${product.name || 'Product'} Image" class="product-image"
+                         onerror="this.onerror=null;this.src='https://placehold.co/400x300/e0e0e0/555555?text=Image+Missing';">
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">${product.name || 'Unknown Product'}</h3>
+                    <p class="product-description">${product.description || 'No description available.'}</p>
+                    <p class="product-price">$${(product.price !== undefined && product.price !== null) ? product.price.toFixed(2) : 'N/A'}</p>
+                </div>
+            `;
+            PRODUCTS_CONTAINER.appendChild(productCard);
+        });
+    }
+
+    // --- Event Listener Setup ---
+    // Attaches event listeners once the DOM is fully loaded.
+    document.addEventListener('DOMContentLoaded', () => {
+        AUTH_ACTION_BTN.addEventListener('click', () => {
+            if (isAuthenticated) {
+                fetchProducts(); // If already authenticated, clicking button refreshes product list
+            } else {
+                initiateLogin(); // If not authenticated, clicking button starts login flow
+            }
+        });
+
+        LOGOUT_BTN.addEventListener('click', logout);
+
+        // On initial page load, check authentication status and try to load products if authenticated.
+        checkAuthStatus();
+    });
+</script>
+</body>
+</html>
