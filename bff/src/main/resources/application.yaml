@@ -15,17 +15,29 @@ spring:
             client-secret: secret
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: read
+            #scope: read,write
             provider: my-idp
         provider:
           my-idp:
             authorization-uri: http://127.0.0.1:8080/oauth2/authorize
             token-uri: http://127.0.0.1:8080/oauth2/token
-    oauth2-login:
-      default-success-url: http://localhost:8000/product_catalog.html
+    #oauth2-login:
+      #default-success-url: http://localhost:8000/product_catalog.html
 
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
       default-filters:
         - TokenRelay
       routes:
@@ -35,6 +47,8 @@ spring:
             - Path=/api/**
           filters:
             - StripPrefix=1
+            - LogTokenFilter
+            - TokenRelay
 
 logging:
   level:

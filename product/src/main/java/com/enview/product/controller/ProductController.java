@@ -3,9 +3,7 @@ package com.enview.product.controller;
 import com.enview.product.model.Product;
 import com.enview.product.service.ProductService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +25,15 @@ public class ProductController {
     public ResponseEntity<List<Product>> getProducts() {
         List<Product> products = productService.getAllProducts();
         return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/{id}")
+    public Product getProduct(@PathVariable int id){
+        return productService.getProduct(id);
+    }
+
+    @PostMapping("/add")
+    public int addProduct(@RequestBody Product product){
+        return this.productService.addProduct(product);
     }
 }

@@ -25,8 +25,6 @@ public class AuthorizationServerConfig {
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .redirectUri("http://localhost:7001/login/oauth2/code/my-client")
-                .scope("read")
-                .scope("write")
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofSeconds(30))  // ⏱️ Short-lived access token
                         .refreshTokenTimeToLive(Duration.ofMinutes(5)) // 🔁 Optional: refresh token lifetime

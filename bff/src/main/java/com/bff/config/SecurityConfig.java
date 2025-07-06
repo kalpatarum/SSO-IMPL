@@ -4,6 +4,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,8 +14,13 @@ import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserSer
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +34,26 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/", "/login**").permitAll()
+                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                        .pathMatchers("/me").permitAll()
+                        .pathMatchers("/", "/login**","/logout").permitAll()
                         .anyExchange().authenticated()
+                )
+                .csrf(csrf -> {
+                    csrf.disable();
+                })
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler((exchange, authentication) -> {
+                            exchange.getExchange().getResponse().setStatusCode(HttpStatus.OK);
+                            return Mono.empty(); // No redirect
+                        })
                 )
                 .oauth2Login(oauth2Login -> {
                     // You can customize login options here if needed
+                    oauth2Login.authenticationSuccessHandler(
+                            new RedirectServerAuthenticationSuccessHandler("http://localhost:3000")
+                    );
                 })
                 .oauth2Client(oauth2Client -> {
                     // Enables TokenRelay (no extra config needed unless customizing)
@@ -60,42 +82,22 @@ public class SecurityConfig {
         };
     }
 
-    /*@Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/login**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                //.oauth2Login(withDefaults()); // modern, recommended style
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(this.customOAuth2UserService())
-                        )
-                );
-        return http.build();
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.addAllowedOrigin("http://localhost:3000"); // React UI
+        corsConfig.addAllowedMethod("OPTIONS");
+        corsConfig.addAllowedMethod("GET");
+        corsConfig.addAllowedMethod("POST");
+        corsConfig.addAllowedMethod("PUT");
+        corsConfig.addAllowedMethod("DELETE");// GET, POST, etc.
+        corsConfig.addAllowedHeader("*");
+        corsConfig.setAllowCredentials(true); // If you're using cookies/session
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
     }
 
-    @Bean
-    public OAuth2UserService<OAuth2UserRequest, OAuth2User> customOAuth2UserService() {
-        return userRequest -> {
-            String accessToken = userRequest.getAccessToken().getTokenValue();
-
-            // Decode JWT manually with Nimbus
-            String sub;
-            try {
-                SignedJWT signedJWT = SignedJWT.parse(accessToken);
-                JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-                sub = claimsSet.getSubject();
-            } catch (ParseException e) {
-                throw new RuntimeException("Invalid JWT format", e);
-            }
-
-            return new DefaultOAuth2User(
-                    Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                    Collections.singletonMap("sub", sub),
-                    "sub"
-            );
-        };
-    }*/
 }

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor // Lombok: Generates a no-argument constructor
 @AllArgsConstructor // Lombok: Generates a constructor with all arguments
 public class Product {
-    private String id;
+    private int id;
     private String name;
     private double price;
     private String description;
