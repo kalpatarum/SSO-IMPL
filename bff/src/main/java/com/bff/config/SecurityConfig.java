@@ -45,14 +45,20 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((exchange, authentication) -> {
+                            // Optional: Extract ID Token to pass to IDP
+                            //String idToken = ""; // if needed, extract from authentication
+
+                            URI idpLogoutUri = URI.create("http://127.0.0.1:8080/logout?post_logout_redirect_uri=http://localhost:5173");
+
                             exchange.getExchange().getResponse().setStatusCode(HttpStatus.OK);
+                            exchange.getExchange().getResponse().getHeaders().setLocation(idpLogoutUri);
                             return Mono.empty(); // No redirect
                         })
                 )
                 .oauth2Login(oauth2Login -> {
                     // You can customize login options here if needed
                     oauth2Login.authenticationSuccessHandler(
-                            new RedirectServerAuthenticationSuccessHandler("http://localhost:3000")
+                            new RedirectServerAuthenticationSuccessHandler("http://localhost:5173")
                     );
                 })
                 .oauth2Client(oauth2Client -> {
@@ -85,7 +91,7 @@ public class SecurityConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.addAllowedOrigin("http://localhost:3000"); // React UI
+        corsConfig.addAllowedOrigin("http://localhost:5173,http://localhost:3000"); // React UI
         corsConfig.addAllowedMethod("OPTIONS");
         corsConfig.addAllowedMethod("GET");
         corsConfig.addAllowedMethod("POST");
